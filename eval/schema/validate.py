@@ -30,9 +30,6 @@ _FORBIDDEN_LEAD_IN_PHRASE = "which of the following is true"
 # Rule 9: negation words that must be emphasized if present
 _NEGATION_WORDS = {"not", "never", "except", "least"}
 
-# Rule 9: pattern for **bold** emphasis
-_BOLD_RE = re.compile(r"\*\*[A-Z]+\*\*")
-
 # Rule 10: absolute terms in distractors (whole word, case-insensitive)
 _ABSOLUTE_TERMS_RE = re.compile(r"\b(always|never)\b", re.IGNORECASE)
 
@@ -116,7 +113,6 @@ def validate_structural(
 
     cognitive_level: str = item.get("cognitive_level", "")
     claim_type: str = item.get("claim_type", "")
-    tier: str = item.get("tier", "")
 
     # ------------------------------------------------------------------
     # Rule 1: Reject if Bloom's level is "remember" for any claim type
