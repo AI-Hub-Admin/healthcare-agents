@@ -334,7 +334,7 @@ Re-judge using the same rubric. Compute the new 0-100 score. This is `score_post
 
 ### Step 8: Log and commit
 
-Append a tab-separated row to `eval/results.tsv` BEFORE the commit decision (ensures the log is always persisted, even if the commit fails):
+Append a tab-separated row to `eval/results.tsv` BEFORE the commit decision (so every commit/revert path has a row ready to persist):
 
 ```
 {iteration}\t{$ARGUMENTS}\t{score_pre_edit}\t{score_post_edit}\t{delta}\t{status}\t{weak_areas}\t{description}
@@ -368,13 +368,12 @@ After 5 iterations (or if interrupted), print a summary:
 Iterations: {N}
 Results: {improved} improved, {reverted} reverted, {capped} capped
 Starting score (iteration 1 pre-edit): {score}
-Last committed score: {score_post_edit from most recent iteration with status=improved, or starting score if none improved}
-Last attempted score: {score_post_edit from final iteration, regardless of status}
+Retained score on disk (last committed iteration): {score_post_edit from most recent iteration with status=improved, or starting score if none improved}
+Last attempted score: {score_post_edit from the last non-capped iteration, or N/A if the final iteration was capped}
 Results log: eval/results.tsv
 ```
 
-Note: "Last committed score" reflects the actual state of the agent .md on disk. "Last attempted score" may be from a reverted/capped iteration — show both so the user can see the gap.
-```
+Note: "Retained score on disk" reflects the actual state of the agent .md on disk. "Last attempted score" is for the final scored attempt only; capped iterations have no post-edit score and should be shown as `N/A` in the TSV.
 
 - [ ] **Step 3: Verify the command file**
 
@@ -384,10 +383,12 @@ Read `.claude/commands/eval.md` back. Verify:
 - BASELINE_LINES is explicitly marked as "FIXED for the entire session — do NOT recompute"
 - LINE_CAP is computed from BASELINE_LINES (not from current file length at edit time)
 - The loop has all 8 steps including the capped path in Step 6
+- The capped path writes `score_post_edit` and `delta` as `N/A` sentinel values, not fake scored values
 - Step 8 appends to results.tsv BEFORE the commit decision
 - Git commands use `git add <specific files>` — never `git add .` or `git add -A`
 - The "one agent per session" rule is in the Rules section
 - The "read fresh each iteration" instruction is in both Rules and Step 1
+- The completion summary distinguishes the retained score on disk from the last attempted score
 
 - [ ] **Step 4: Commit**
 
@@ -452,6 +453,7 @@ Verify:
 - results.tsv has header + one row per completed iteration, all columns populated
 - Git log shows eval commits with the correct message format
 - Agent file line count ≤ LINE_CAP from session start
+- The retained prompt score equals the last committed iteration, not the last attempted edit
 
 - [ ] **Step 5: Merge to main (only after validation passes)**
 
