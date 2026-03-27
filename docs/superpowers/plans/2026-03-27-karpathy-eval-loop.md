@@ -162,11 +162,17 @@ git commit -m "feat: seed eval results log with header"
 **Files:**
 - Create: `eval/role-baselines/revenue-medical-coding-specialist.md`
 
-- [ ] **Step 1: Read the target agent**
+- [ ] **Step 1: Create the directory**
+
+```bash
+mkdir -p eval/role-baselines
+```
+
+- [ ] **Step 2: Read the target agent**
 
 Read `agents/revenue-medical-coding-specialist.md` (451 lines). Note which CPC/CCS exam domains are well-covered and which might be gaps.
 
-- [ ] **Step 2: Write `eval/role-baselines/revenue-medical-coding-specialist.md`**
+- [ ] **Step 3: Write `eval/role-baselines/revenue-medical-coding-specialist.md`**
 
 Write this content:
 
@@ -198,10 +204,9 @@ Write this content:
 
 16 bullet points. Items like anesthesia coding, pathology panel rules, and OPPS/APC rules are areas the agent .md may not deeply cover — these are the blind spots the baseline is designed to surface.
 
-- [ ] **Step 3: Create the directory and commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-mkdir -p eval/role-baselines
 git add eval/role-baselines/revenue-medical-coding-specialist.md
 git commit -m "feat: add role baseline for medical coding specialist"
 ```
@@ -318,7 +323,7 @@ After editing, check line count:
 Run: `wc -l < agents/$ARGUMENTS.md`
 If the count exceeds LINE_CAP (computed in preflight — do NOT recompute from current file):
   - Immediately run: `git restore agents/$ARGUMENTS.md`
-  - Append a row to `eval/results.tsv` with status `capped`, scores as `score_pre_edit` for both columns, delta `0`, and description noting the line cap was exceeded
+  - Append a row to `eval/results.tsv` with status `capped`, `score_pre_edit` as computed, `score_post_edit` as `N/A`, `delta` as `N/A`, and description noting the line cap was exceeded. The N/A values mark this row as a sentinel — no post-edit scoring occurred.
   - Run: `git add eval/results.tsv && git commit -m "eval: $ARGUMENTS capped (exceeded line limit)"`
   - Skip to the next iteration
 
@@ -363,9 +368,12 @@ After 5 iterations (or if interrupted), print a summary:
 Iterations: {N}
 Results: {improved} improved, {reverted} reverted, {capped} capped
 Starting score (iteration 1 pre-edit): {score}
-Final score (last post-edit): {score}
+Last committed score: {score_post_edit from most recent iteration with status=improved, or starting score if none improved}
+Last attempted score: {score_post_edit from final iteration, regardless of status}
 Results log: eval/results.tsv
 ```
+
+Note: "Last committed score" reflects the actual state of the agent .md on disk. "Last attempted score" may be from a reverted/capped iteration — show both so the user can see the gap.
 ```
 
 - [ ] **Step 3: Verify the command file**
@@ -395,25 +403,17 @@ git commit -m "feat: add /eval slash command for agent improvement loop"
 **Files:**
 - None created — this is a test run against the first target agent.
 
-**Important:** Tasks 1-4 must be committed to the current branch before this task. This task merges that work to main, then creates a NEW branch to validate the full loop in isolation.
+**Important:** Tasks 1-4 must be committed to the current branch before this task. Validation runs ON the implementation branch — do NOT merge to main until the eval loop is proven to work.
 
-- [ ] **Step 1: Merge implementation to main**
-
-From the branch where Tasks 1-4 are committed:
+- [ ] **Step 1: Confirm you are on the implementation branch**
 
 ```bash
-IMPL_BRANCH=$(git branch --show-current)
-git checkout main
-git merge --no-ff "$IMPL_BRANCH" -m "feat: add Karpathy-style eval loop (/eval command, rubric, role baseline)"
+git branch --show-current
 ```
 
-- [ ] **Step 2: Create a feature branch for the eval run**
+You should be on the branch where Tasks 1-4 were committed (e.g., `feat/eval-loop`). If not, check it out. Do NOT switch to main.
 
-```bash
-git checkout -b eval/revenue-medical-coding-specialist
-```
-
-- [ ] **Step 3: Run the eval**
+- [ ] **Step 2: Run the eval**
 
 ```
 /eval revenue-medical-coding-specialist
@@ -431,7 +431,7 @@ Watch the first iteration. Verify:
 - results.tsv gets a new row with correct tab-separated columns
 - Git commit (improved) or git restore + log commit (reverted/capped) happens
 
-- [ ] **Step 4: Let it run for 2-3 more iterations**
+- [ ] **Step 3: Let it run for 2-3 more iterations**
 
 Watch for:
 - Fresh questions each iteration (not reusing prior questions)
@@ -440,7 +440,7 @@ Watch for:
 - At least one improvement committed (not guaranteed, but likely in early iterations)
 - results.tsv accumulates rows with incrementing iteration numbers
 
-- [ ] **Step 5: Inspect results**
+- [ ] **Step 4: Inspect results**
 
 ```bash
 cat eval/results.tsv
@@ -453,17 +453,17 @@ Verify:
 - Git log shows eval commits with the correct message format
 - Agent file line count ≤ LINE_CAP from session start
 
-- [ ] **Step 6: Decide on merge**
+- [ ] **Step 5: Merge to main (only after validation passes)**
 
-If the run was successful, this is a deliberate choice — for this personal tool, direct merge is acceptable:
+If the eval loop worked correctly:
 
 ```bash
+IMPL_BRANCH=$(git branch --show-current)
 git checkout main
-git merge eval/revenue-medical-coding-specialist --no-ff -m "eval: initial run on revenue-medical-coding-specialist"
-git branch -d eval/revenue-medical-coding-specialist
+git merge --no-ff "$IMPL_BRANCH" -m "feat: add /eval loop + initial run on revenue-medical-coding-specialist"
 ```
 
-Alternatively, create a PR with `gh pr create` if you prefer review before merge.
+If the eval loop was broken, fix it on the implementation branch and re-run. Do NOT merge broken infrastructure to main.
 
 ---
 
@@ -471,7 +471,7 @@ Alternatively, create a PR with `gh pr create` if you prefer review before merge
 
 Tasks 1-3 are independent (rubric, results log, role baseline) and can run in parallel.
 Task 4 (slash command) depends on all three existing on disk.
-Task 5 (validation) depends on Tasks 1-4 being merged to main.
+Task 5 (validation) depends on Tasks 1-4 being committed to the implementation branch. Merge to main only AFTER validation passes.
 
 ```
 [Task 1: rubric] ──────┐

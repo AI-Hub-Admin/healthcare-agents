@@ -116,7 +116,7 @@ iteration	agent	score_pre_edit	score_post_edit	delta	status	weak_areas	descripti
 
 Column names use `pre_edit` / `post_edit` to make clear these are same-question-set comparisons within a single iteration. The score_pre_edit of iteration 2 (71) is NOT the score_post_edit of iteration 1 (74) — they use different question sets.
 
-**Status values**: `improved` (committed), `reverted` (checked out), `capped` (edit exceeded 120% line count, reverted without re-scoring).
+**Status values**: `improved` (committed), `reverted` (checked out), `capped` (edit exceeded line limit, reverted without re-scoring — `score_post_edit` and `delta` are `N/A` since no post-edit scoring occurred).
 
 **Important**: Scores across iterations are NOT comparable. Each iteration uses different questions. Only the delta within an iteration (same questions, before vs after) is meaningful.
 
