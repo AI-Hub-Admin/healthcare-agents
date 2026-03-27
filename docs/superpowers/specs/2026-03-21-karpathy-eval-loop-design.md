@@ -21,20 +21,22 @@ The pattern has been replicated by dozens of people (Ralph Wiggum Loop, Continuo
 
 ## Design
 
-### Three Files
+### Core Files
 
 1. **`/eval` slash command** — the program. Drives the loop. Can read and edit agent .md files.
 2. **`eval/rubric.md`** — the frozen metric. Scoring criteria Claude-as-judge uses. The loop can NEVER modify this file.
 3. **`eval/results.tsv`** — append-only log of every iteration.
+4. **`eval/role-baselines/{name}.md`** — optional frozen capability checklists for blind spot detection (see Role Baselines).
 
 ### Preflight Checks
 
 Before entering the loop, the slash command MUST verify:
 
 1. **Not on main**: `git branch --show-current` must NOT be `main` or `master`. Abort with message: "Switch to a feature branch first (e.g., `git checkout -b eval/{agent-name}`)."
-2. **Clean worktree for target file**: `git diff --name-only` and `git diff --cached --name-only` must not include `agents/{name}.md`. Other dirty files are OK — we only need the target file clean so `git restore` is safe. Abort with: "agents/{name}.md has uncommitted changes. Commit or stash first."
-3. **Agent file exists**: `agents/{name}.md` must exist. Abort with: "No agent file found at agents/{name}.md."
-4. **Rubric exists**: `eval/rubric.md` must exist. Abort with: "Frozen rubric not found at eval/rubric.md."
+2. **Clean index**: `git diff --cached --name-only` must be empty (no staged changes). Unstaged changes to other files are OK, but a dirty index would leak unrelated files into eval commits. Abort with: "You have staged changes. Commit or unstage them first (`git reset HEAD`)."
+3. **Clean target file**: `git diff --name-only -- agents/{name}.md` must be empty (no unstaged changes to the target). Abort with: "agents/{name}.md has uncommitted changes. Commit or stash first."
+4. **Agent file exists**: `agents/{name}.md` must exist. Abort with: "No agent file found at agents/{name}.md."
+5. **Rubric exists**: `eval/rubric.md` must exist. Abort with: "Frozen rubric not found at eval/rubric.md."
 
 ### The Loop (up to 5 iterations per invocation)
 
@@ -52,11 +54,13 @@ Before entering the loop, the slash command MUST verify:
    - Must not exceed BASELINE_LINES × 1.2 OR BASELINE_LINES + 50 (whichever is greater)
    - Cap is against SESSION-START baseline, not pre-edit — prevents compounding across iterations
    - Prefer appending specific guidance to existing sections over rewriting
-10. Re-answer the SAME 25 questions with the edited agent
-11. Re-judge → new score
+10. Check line count: if capped, skip to step 12 with status=capped
+11. Re-answer the SAME 25 questions with the edited agent, re-judge → new score
 12. Append to eval/results.tsv (BEFORE commit/revert — ensures every iteration is logged)
-13. New > old → git add agents/{name}.md eval/results.tsv && git commit -m "eval: {agent} {before}→{after} (+{delta})"
-    New <= old → git restore agents/{name}.md && git add eval/results.tsv && git commit -m "eval: {agent} {before}→{after} ({delta}) reverted"
+13. Commit decision (three paths):
+    - improved (new > old) → git add agents/{name}.md eval/results.tsv && git commit -m "eval: {agent} {before}→{after} (+{delta})"
+    - reverted (new <= old) → git restore agents/{name}.md && git add eval/results.tsv && git commit -m "eval: {agent} reverted ({delta})"
+    - capped (line count exceeded) → git restore agents/{name}.md && git add eval/results.tsv && git commit -m "eval: {agent} capped (exceeded line limit)"
 14. Next iteration (generate fresh 25 questions)
 ```
 
@@ -191,7 +195,7 @@ The previous design (`2026-03-20-exam-architect-eval-loop-design.md`) specified:
 - Estimated cost: ~$17,850 for 51 agents
 
 This design specifies:
-- 3 files (slash command, rubric, results log)
+- 4 core files (slash command, rubric, results log, optional role baselines)
 - Runs inside Claude Code (zero API cost)
 - No Python, no dependencies
 - Estimated time: ~15-20 minutes per agent per session
