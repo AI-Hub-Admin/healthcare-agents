@@ -1,27 +1,20 @@
 # Changelog
 
-## 2026-03-28
+All notable changes to this project will be documented in this file.
+
+## [1.0.0] - 2026-04-09
+
+Initial release of the healthcare-agents repository.
 
 ### Added
-- Cross-tool self-improvement kit for Claude Code and Codex via [AGENTS.md](AGENTS.md), [.claude/commands/eval.md](.claude/commands/eval.md), [eval/rubric.md](eval/rubric.md), [eval/results.tsv](eval/results.tsv), and [scripts/install-self-improvement-kit.sh](scripts/install-self-improvement-kit.sh).
-- Prompt-quality audit script at [scripts/audit-agents.py](scripts/audit-agents.py) to rank the weakest agents and measure improvement passes.
-- Initial role baseline for the medical coding specialist at [eval/role-baselines/revenue-medical-coding-specialist.md](eval/role-baselines/revenue-medical-coding-specialist.md).
 
-### Changed
-- Updated [README.md](README.md) and [INSTALL.md](INSTALL.md) to document the simple self-improving setup for Claude Code and Codex.
-- Tightened [scripts/lint-agents.sh](scripts/lint-agents.sh) so it validates canonical agent headings and treats the exam architect as a utility prompt.
-- Strengthened prompt coverage in:
-  - [agents/healthit-epic-applications-analyst.md](agents/healthit-epic-applications-analyst.md)
-  - [agents/operations-workforce-manager.md](agents/operations-workforce-manager.md)
-  - [agents/payer-medicare-outreach-coordinator.md](agents/payer-medicare-outreach-coordinator.md)
-  - [agents/quality-patient-experience-coordinator.md](agents/quality-patient-experience-coordinator.md)
-  - [agents/quality-process-improvement-analyst.md](agents/quality-process-improvement-analyst.md)
-  - [agents/quality-risk-manager.md](agents/quality-risk-manager.md)
-  - [agents/revenue-340b-program-manager.md](agents/revenue-340b-program-manager.md)
-  - [agents/strategy-operations-consultant.md](agents/strategy-operations-consultant.md)
-  - [agents/strategy-structural-improvement-consultant.md](agents/strategy-structural-improvement-consultant.md)
+- 51 healthcare administration agent system prompts across 10 categories: Revenue, Clinical, Quality, Payer, Operations, Health IT, Population Health, Pharmacy, Strategy, and Emergency Preparedness.
+- Karpathy-style automated eval loop (`/eval` command) with frozen rubric (Accuracy 0.40, Completeness 0.35, Specificity 0.25).
+- Split-role scoring architecture: strong judge model generates exams and critiques, fast editor model patches prompts, parent orchestrator owns git writes.
+- Identity-preservation constraints to prevent prompt drift during automated improvement.
+- Git-ratcheted commit strategy: improvements commit atomically, regressions revert automatically.
+- Append-only results log at `eval/results.tsv`.
+- 10 agents improved to 80+ scores through the eval loop, including Revenue Medical Coding Specialist (82.15), Revenue Finance Manager (81.55), and Revenue 340B Program Manager (81.20).
+- Cross-tool self-improvement kit and agent quality review infrastructure.
 
-### Verification
-- `bash scripts/lint-agents.sh`
-- `python3 -m py_compile scripts/audit-agents.py`
-- `python3 scripts/audit-agents.py --top 5`
+See [docs/release-notes/2026-04-09-eval-loop-milestone.md](docs/release-notes/2026-04-09-eval-loop-milestone.md) for full details.
