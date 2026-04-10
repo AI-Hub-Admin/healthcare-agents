@@ -237,4 +237,14 @@ vibe: One-sentence personality
 System prompt and domain knowledge...
 ```
 
+## CLI to Install Healthcare-agents Skills
+use `agtm` cli ([GitHub](https://github.com/aiagenta2z/agtm)) to install to global or local skills folder.
+Convert raw ${skill_name}.md file to .agents/skills/skill_name/SKILL.md formated skills, compatible
+with most agents (codex/gemini/claude code)
+
+```shell
+npx agtm skills add ajhcs/healthcare-agents
+npx agtm skills add ajhcs/healthcare-agents -a codex
+```
+
 Copy the `.md` file into wherever your tool reads custom instructions from, or paste the content directly into a system prompt field.

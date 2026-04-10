@@ -303,22 +303,8 @@ This does **not** require the Python eval harness. See [INSTALL.md](INSTALL.md) 
 | **OpenClaw** | Copy as skills (see [INSTALL.md](INSTALL.md)) |
 | **Any tool** | Paste `.md` content into system prompt / custom instructions |
 
-<<<<<<< main
 Full setup instructions with tool-specific tips: **[INSTALL.md](INSTALL.md)**
 
-### CLI to Install Skills
-use `agtm` cli ([GitHub](https://github.com/aiagenta2z/agtm)) to install to global or local skills folder.
-Convert raw ${skill_name}.md file to .agents/skills/skill_name/SKILL.md formated skills, compatible
-with most agents (codex/gemini/claude code)
-
-```shell
-npx agtm skills add ajhcs/healthcare-agents
-npx agtm skills add ajhcs/healthcare-agents -a codex
-```
-
-
-=======
->>>>>>> main
 ## Validation
 
 ```bash
